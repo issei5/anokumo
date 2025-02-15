@@ -2,6 +2,11 @@ require 'json'
 require 'base64'
 require_relative 'analyzer'
 
+HEADERS = {
+  'Access-Control-Allow-Origin' => '*',
+  'Access-Control-Allow-Headers' => 'Content-Type'
+}.freeze
+
 def lambda_handler(event:, context:)
   # body = JSON.parse(event['body'])
   # image_data = body['image']
@@ -22,7 +27,7 @@ def lambda_handler(event:, context:)
 
   {
     statusCode: 200,
-    headers: { "Content-Type": "application/json" },
+    headers: HEADERS,
     body: JSON.generate({
       result: analysis_result
     })
