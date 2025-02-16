@@ -9,10 +9,29 @@
 <body>
     <div id="app">
         <h1>雲解析サービス</h1>
-        <button id="capture-btn">雲の写真を撮る</button>
-        <video id="video" width="640" height="480" autoplay></video>
-        <canvas id="canvas" style="display:none;"></canvas>
-        <div id="result"></div>
+
+        <div id="permissionMessage">
+            <p>このサイトでは現在地とスマホの角度と撮影した画像を使って雲を解析します。<br>
+            そのため以下の「OK」ボタンを押したら諸々の権限で許可してください。</p>
+            <button id="okButton">OK</button>
+        </div>
+
+        <div id="captureSection" style="display: none;">
+            <video id="video" width="640" height="480" autoplay></video>
+            <div id="capturedImageContainer" style="display: none;">
+                <img id="capturedImage" width="640" height="480" />
+            </div>
+            <div id="controls">
+                <button id="captureButton">撮影する</button>
+                <button id="sendButton" style="display: none;">送信する</button>
+            </div>
+            <canvas id="canvas" style="display:none;"></canvas>
+            <div id="result"></div>
+        </div>
+
+        <div id="loadingSpinner" style="display: none;">
+            <div class="spinner"></div>
+        </div>
     </div>
     <script src="app.js"></script>
 </body>
