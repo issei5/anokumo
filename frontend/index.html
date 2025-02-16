@@ -17,12 +17,13 @@
         </div>
 
         <div id="captureSection" style="display: none;">
-            <video id="video" width="640" height="480" autoplay></video>
+            <video id="video" width="300" height="300" autoplay></video>
             <div id="capturedImageContainer" style="display: none;">
-                <img id="capturedImage" width="640" height="480" />
+                <img id="capturedImage" width="300" height="300" />
             </div>
             <div id="controls">
                 <button id="captureButton">撮影する</button>
+                <button id="reCaptureButton" style="display: none;">もう一度撮影する</button>
                 <button id="sendButton" style="display: none;">送信する</button>
             </div>
             <canvas id="canvas" style="display:none;"></canvas>

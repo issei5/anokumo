@@ -1,4 +1,5 @@
 const captureButton = document.getElementById("captureButton");
+const reCaptureButton = document.getElementById("reCaptureButton");
 const sendButton = document.getElementById("sendButton");
 const resultDiv = document.getElementById("result");
 const video = document.getElementById("video");
@@ -12,12 +13,15 @@ let stream = null;
 let capturedImageData = null;
 let capturedLocation = null;
 let capturedOrientation = null;
+let position = null;
 
 // 1. OKボタンがクリックされたときの処理
 document.getElementById('okButton').addEventListener('click', async function() {
     try {
         loadingSpinner.style.display = 'flex';
-        await Promise.all([getLocation(), getCameraPermission()]);
+        await getCameraPermission();
+        position = await getLocation();
+
         document.getElementById('permissionMessage').style.display = 'none';
         document.getElementById('captureSection').style.display = 'block';
         await startCamera();
@@ -29,24 +33,41 @@ document.getElementById('okButton').addEventListener('click', async function() {
     }
 });
 
+function waitForVideoReady() {
+    return new Promise((resolve) => {
+        if (video.readyState >= 3) { // HAVE_FUTURE_DATA or higher
+            resolve();
+        } else {
+            video.addEventListener('loadeddata', () => {
+                // ビデオの最初のフレームが読み込まれるまで少し待つ
+                setTimeout(resolve, 500);
+            });
+        }
+    });
+}
+
 async function startCamera() {
     try {
+        capturedImageContainer.style.display = 'none';
+        sendButton.style.display = 'none';
+        captureButton.style.display = 'block';
+        reCaptureButton.style.display = 'none';
         if (stream) {
             stream.getTracks().forEach(track => track.stop());
         }
         stream = await navigator.mediaDevices.getUserMedia({ 
             video: { 
                 facingMode: 'environment',  // 背面カメラを優先
-                width: { ideal: 1920 },     // より高品質な画像を取得
-                height: { ideal: 1080 }
+                width: { ideal: 300 },     // より高品質な画像を取得
+                height: { ideal: 300 }
             } 
         });
         video.srcObject = stream;
         video.style.display = 'block';
-        capturedImageContainer.style.display = 'none';
-        sendButton.style.display = 'none';
-        captureButton.style.display = 'block';
-        
+
+        await video.play();
+        await waitForVideoReady();
+
         // エラー時のイベントリスナーを追加
         stream.oninactive = () => {
             console.log('Camera stream ended');
@@ -68,15 +89,11 @@ captureButton.addEventListener('click', async function() {
         loadingSpinner.style.display = 'flex';
 
         // 位置情報と角度を並行して取得
-        const [position, orientation] = await Promise.all([
-            getLocation(),
-            getOrientation()
-        ]);
+        const orientation = await getOrientation();
 
         capturedLocation = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy  // 精度情報を追加
         };
 
         capturedOrientation = orientation;
@@ -98,6 +115,8 @@ captureButton.addEventListener('click', async function() {
         video.style.display = 'none';
         capturedImageContainer.style.display = 'block';
         sendButton.style.display = 'block';
+        captureButton.style.display = 'none';
+        reCaptureButton.style.display = 'block';
         
         console.log('Captured Data:', {
             location: capturedLocation,
@@ -113,6 +132,11 @@ captureButton.addEventListener('click', async function() {
     }
 });
 
+// 4. 再撮影ボタンがクリックされたときの処理
+reCaptureButton.addEventListener('click', async function() {
+    await startCamera();
+});
+
 // 3. 送信ボタンがクリックされたときの処理
 sendButton.addEventListener('click', async function() {
     if (!capturedImageData || !capturedLocation || !capturedOrientation) {
@@ -124,8 +148,11 @@ sendButton.addEventListener('click', async function() {
         loadingSpinner.style.display = 'flex';
         resultDiv.innerHTML = '解析中...';
 
+        const base64Data = capturedImageData.replace(/^data:image\/jpeg;base64,/, '');
+
         const postData = {
-            image: capturedImageData,
+            image: base64Data,
+            image_type: 'jpeg',
             location: capturedLocation,
             orientation: {
                 alpha: capturedOrientation.alpha,
@@ -154,10 +181,13 @@ sendButton.addEventListener('click', async function() {
         capturedImageData = null;
         capturedLocation = null;
         capturedOrientation = null;
-        
+
         // カメラを再起動（次の撮影のため）
-        await startCamera();
+        // await startCamera();
+        sendButton.style.display = 'none';
+        reCaptureButton.style.display = 'none';
     } catch (err) {
+        resultDiv.innerHTML = '';
         alert('送信に失敗しました: ' + err.message);
         console.error('Send error:', err);
     } finally {
@@ -198,10 +228,17 @@ function getOrientation() {
         window.addEventListener('deviceorientation', function handler(event) {
             clearTimeout(timeoutId);
             window.removeEventListener('deviceorientation', handler);
-            
+
             if (event.alpha === null || event.beta === null || event.gamma === null) {
-                reject(new Error('角度情報の取得に失敗しました。'));
+                const defaultOrientation = {
+                    alpha: 0, // 0度（デフォルト）
+                    beta: 0,  // 0度（デフォルト）
+                    gamma: 0  // 0度（デフォルト）
+                };
+                resolve(defaultOrientation);
                 return;
+                // reject(new Error('角度情報の取得に失敗しました。'));
+                // return;
             }
 
             resolve({
