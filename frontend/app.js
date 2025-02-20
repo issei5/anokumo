@@ -98,18 +98,18 @@ captureButton.addEventListener('click', async function() {
 
         capturedOrientation = orientation;
 
-        // カメラを停止
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
-        
         // 画像を取得
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
+
         // 画像データを保存（品質を調整）
         capturedImageData = canvas.toDataURL("image/jpeg", 0.8);
-        
+
+        // カメラを停止
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+
         // UI更新
         capturedImage.src = capturedImageData;
         video.style.display = 'none';
