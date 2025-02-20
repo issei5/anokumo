@@ -117,7 +117,7 @@ captureButton.addEventListener('click', async function() {
         sendButton.style.display = 'block';
         captureButton.style.display = 'none';
         reCaptureButton.style.display = 'block';
-        
+
         console.log('Captured Data:', {
             location: capturedLocation,
             orientation: capturedOrientation
@@ -132,9 +132,28 @@ captureButton.addEventListener('click', async function() {
     }
 });
 
+function resetMap() {
+    if (window.map) {
+        window.map.remove();
+        window.map = null;
+    }
+
+    const map = document.getElementById('map');
+    if (map) {
+        map.remove();
+    }
+
+    const newMapDiv = document.createElement('div');
+    newMapDiv.id = 'map';
+    newMapDiv.style.height = '400px';
+    document.getElementById('captureSection').appendChild(newMapDiv);
+}
+
 // 4. 再撮影ボタンがクリックされたときの処理
 reCaptureButton.addEventListener('click', async function() {
     await startCamera();
+    resetMap();
+    resultDiv.innerHTML = '';
 });
 
 // 3. 送信ボタンがクリックされたときの処理
@@ -197,7 +216,7 @@ sendButton.addEventListener('click', async function() {
         // カメラを再起動（次の撮影のため）
         // await startCamera();
         sendButton.style.display = 'none';
-        reCaptureButton.style.display = 'none';
+        reCaptureButton.style.display = 'block';
     } catch (err) {
         resultDiv.innerHTML = '';
         alert('送信に失敗しました: ' + err.message);
@@ -242,25 +261,29 @@ function getOrientation() {
             window.removeEventListener('deviceorientation', handler);
 
             if (event.alpha === null || event.beta === null || event.gamma === null) {
-                const defaultOrientation = {
-                    alpha: 0, // 0度（デフォルト）
-                    beta: 0,  // 0度（デフォルト）
-                    gamma: 0  // 0度（デフォルト）
-                };
-                resolve(defaultOrientation);
+                // 角度情報が取得できない場合のデフォルト値
+                resolve({
+                    alpha: 0, // 水平回転
+                    beta: 45,  // 垂直回転
+                    gamma: 0  // ロール
+                });
                 return;
-                // reject(new Error('角度情報の取得に失敗しました。'));
-                // return;
             }
 
+            // 補正処理（背面カメラを想定）
+            const correctedAlpha = (event.alpha + 180) % 360;
+            const correctedBeta = event.beta -90;
+            const correctedGamma = event.gamma;
+
             resolve({
-                alpha: event.alpha,
-                beta: event.beta,
-                gamma: event.gamma
+                alpha: correctedAlpha,
+                beta: correctedBeta,
+                gamma: correctedGamma
             });
         });
     });
 }
+
 
 function getCameraPermission() {
     return navigator.mediaDevices.getUserMedia({ 
