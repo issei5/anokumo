@@ -175,7 +175,19 @@ sendButton.addEventListener('click', async function() {
 
         const data = await response.json();
         console.log('API Response:', data);
-        resultDiv.innerHTML = `解析結果: ${data.result}`;
+        resultDiv.innerHTML = `解析結果: ${data.description}`;
+        const latitude = data.position.latitude;
+        const longitude = data.position.longitude;
+        const map = L.map('map').setView([latitude, longitude], 13);  // 初期位置とズームレベル
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        L.marker([latitude, longitude]).addTo(map)
+            .bindPopup('雲がここにあります')
+            .openPopup();
+
 
         // 送信成功後のクリーンアップ
         capturedImageData = null;
