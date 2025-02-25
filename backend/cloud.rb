@@ -27,7 +27,9 @@ class Cloud
   def generate_description(alpha, beta, distance_to_cloud)
     [
       cloud_info,
+      "<br>",
       search_conditions(alpha, beta),
+      "<br>",
       distance_info(distance_to_cloud)
     ].join
   end

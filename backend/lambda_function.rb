@@ -44,7 +44,6 @@ end
 
 def parse_event_body
   body = JSON.parse(@event['body'])
-  p "body is #{body}"
   encoded_image = body['image']
   @image_data = Base64.decode64(encoded_image)
   @file_extension = body['image_type']
