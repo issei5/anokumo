@@ -66,7 +66,8 @@ class Handler
   end
 
   def generate_cloud_info
-    cloud_name = TypeAnalyzer.call(@image_data, @file_extension)
+    # cloud_name = TypeAnalyzer.call(@image_data, @file_extension)
+    cloud_name = "上記にするとbedrockによる解析ができる。お金がかかるからコメントアウトしておく。"
 
     cloud = Cloud.new(cloud_name)
 
